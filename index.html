@@ -3,234 +3,177 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>MEM QUIZ GOD MODE 🔥</title>
+<title>MEM QUIZ KAHOOT CLONE 🔥</title>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 <style>
-body{
-margin:0;
-font-family:Arial;
-background:radial-gradient(circle at top,#1a1a1a,#000);
-color:#fff;
-text-align:center;
-}
+body{margin:0;font-family:Arial;background:#0b0b0f;color:#fff;text-align:center}
 .container{max-width:1000px;margin:auto;padding:20px}
-.card{
-background:rgba(255,255,255,0.06);
-border:1px solid rgba(255,255,255,0.1);
-backdrop-filter:blur(10px);
-padding:16px;
-border-radius:16px;
-margin-top:12px;
-box-shadow:0 0 25px rgba(0,0,0,0.4);
-}
-button{
-padding:14px;
-margin:6px;
-width:100%;
-border:0;
-border-radius:12px;
-font-size:15px;
-cursor:pointer;
-transition:0.2s;
-}
-button:hover{transform:scale(1.02)}
-input,textarea,select{
-width:100%;padding:10px;margin:5px;border-radius:8px;border:none
-}
+.card{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);padding:16px;border-radius:14px;margin-top:10px}
+input,textarea,select{width:100%;padding:10px;margin:6px 0;border-radius:8px;border:none}
+button{padding:12px;margin:6px;width:100%;border-radius:10px;border:none;cursor:pointer;font-weight:bold}
 .hidden{display:none}
-.a{background:#00e676;color:#000;font-weight:bold}
-.b{background:#ffea00;color:#000;font-weight:bold}
-.c{background:#ff1744;color:#fff;font-weight:bold}
-.timer{font-size:26px;margin:10px;color:#00e5ff;text-shadow:0 0 10px #00e5ff}
-.title{
-font-size:34px;
-font-weight:900;
-background:linear-gradient(90deg,#00e5ff,#ff00ff);
--webkit-background-clip:text;
--webkit-text-fill-color:transparent;
-}
+.title{font-size:30px;background:linear-gradient(90deg,#00e5ff,#ff00ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.a{background:#00e676}
+.b{background:#ffea00}
+.c{background:#ff1744;color:#fff}
+.timer{font-size:22px;color:#00e5ff}
 </style>
 </head>
 <body>
 <div class="container">
 
-<h1 class="title">🔥 MEM QUIZ GOD MODE</h1>
+<h1 class="title">🔥 MEM QUIZ KAHOOT CLONE</h1>
 
-<div id="login" class="card">
-<h3>Wejście</h3>
-<input id="nick" placeholder="Nick"/>
-<input id="room" placeholder="Kod pokoju"/>
-<button onclick="createRoom()">STWÓRZ POKÓJ (HOST)</button>
-<button onclick="joinRoom()">DOŁĄCZ</button>
+<div id="menu" class="card">
+<h3>Start</h3>
+<input id="nick" placeholder="Twój nick"/>
+<button onclick="createQuizMode()">🎮 HOST - TWÓRZ GRĘ</button>
+<input id="joinCode" placeholder="Kod pokoju"/>
+<button onclick="joinGame()">➡️ DOŁĄCZ</button>
+</div>
+
+<div id="hostPanel" class="card hidden">
+<h3>HOST PANEL</h3>
+<div>KOD POKOJU: <span id="roomCode"></span></div>
+<button onclick="startGame()">START GRY</button>
+<div id="quizSelect"></div>
 </div>
 
 <div id="lobby" class="card hidden">
-<h3>Lobby</h3>
+<h3>LOBBY</h3>
 <div id="players"></div>
-<button id="startBtn" onclick="startGame()" class="hidden">START</button>
 </div>
 
 <div id="game" class="card hidden">
-<h2 id="q"></h2>
+<h2 id="question"></h2>
 <div class="timer" id="timer"></div>
 <button class="a" onclick="answer('A')" id="a"></button>
 <button class="b" onclick="answer('B')" id="b"></button>
 <button class="c" onclick="answer('C')" id="c"></button>
 </div>
 
-<div id="builder" class="card hidden">
-<h3>Quiz Builder</h3>
-<input id="quizTitle" placeholder="Tytuł quizu"/>
-<textarea id="quizData" placeholder='[{"q":"pytanie","a":"A","b":"B","c":"C"}]'></textarea>
-<button onclick="saveQuiz()">Zapisz quiz</button>
-</div>
-
-<div id="selectQuiz" class="card hidden">
-<h3>Wybierz quiz</h3>
-<select id="quizList"></select>
-<button onclick="chooseQuiz()">Użyj</button>
+<div id="builder" class="card">
+<h3>QUIZ BUILDER</h3>
+<input id="qTitle" placeholder="Nazwa quizu"/>
+<textarea id="qData" placeholder='[{"q":"pytanie","a":"A","b":"B","c":"C"}]'></textarea>
+<button onclick="saveQuiz()">ZAPISZ QUIZ</button>
 </div>
 
 </div>
 
 <script>
-const firebaseConfig = {
-  apiKey: "AIzaSyCjIKb55h0taiyQNAHmP2JX9QQ-mfL8FAQ",
-  authDomain: "kahoot-1e809.firebaseapp.com",
-  databaseURL: "https://kahoot-1e809-default-rtdb.europe-west1.firebasedatabase.app/",
-  projectId: "kahoot-1e809",
-  storageBucket: "kahoot-1e809.firebasestorage.app",
-  messagingSenderId: "24344892847",
-  appId: "1:24344892847:web:cce7d556f1319c6c074b5a"
+const firebaseConfig={
+apiKey:"AIzaSyCjIKb55h0taiyQNAHmP2JX9QQ-mfL8FAQ",
+authDomain:"kahoot-1e809.firebaseapp.com",
+databaseURL:"https://kahoot-1e809-default-rtdb.europe-west1.firebasedatabase.app/",
+projectId:"kahoot-1e809",
+storageBucket:"kahoot-1e809.firebasestorage.app",
+messagingSenderId:"24344892847",
+appId:"1:24344892847:web:cce7d556f1319c6c074b5a"
 };
 
 firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
+const db=firebase.database();
 
 let room="";
 let nick="";
 let isHost=false;
-let currentQuiz=null;
+let quiz=null;
 let index=0;
 let timer;
 
-// SAFE DEFAULT QUIZZES (neutral IT humor)
-const defaultQuizzes = [
-{
-  title:"IT Office Chaos",
-  questions:[
-    {q:"Kto ma vibe 'działa na moim komputerze'?",a:"Dev A",b:"Dev B",c:"Dev C"},
-    {q:"Kto najczęściej mówi 'u mnie działa'?",a:"Dev A",b:"Dev B",c:"Dev C"},
-    {q:"Kto najczęściej robi merge konflikt?",a:"Dev A",b:"Dev B",c:"Dev C"}
-  ]
-},
-{
-  title:"Office Energy",
-  questions:[
-    {q:"Kto ma największą energię chaosu w poniedziałek?",a:"Dev A",b:"Dev B",c:"Dev C"},
-    {q:"Kto wygląda jakby debugował życie?",a:"Dev A",b:"Dev B",c:"Dev C"}
-  ]
-}
-];
-
-function seed(){
-  db.ref('quizzes').once('value',snap=>{
-    if(!snap.val()){
-      defaultQuizzes.forEach(q=>db.ref('quizzes').push(q));
-    }
-  });
-}
-seed();
-
-function createRoom(){
-  room=Math.floor(Math.random()*9000+1000)+"";
+function createQuizMode(){
   nick=document.getElementById('nick').value||"HOST";
+  room=Math.floor(1000+Math.random()*9000).toString();
   isHost=true;
 
-  db.ref('rooms/'+room).set({players:{},quizId:null,qIndex:0,phase:'lobby'});
+  db.ref('rooms/'+room).set({
+    host:nick,
+    players:{},
+    quizId:null,
+    state:"lobby",
+    index:0
+  });
 
-  document.getElementById('login').classList.add('hidden');
-  document.getElementById('selectQuiz').classList.remove('hidden');
+  document.getElementById('menu').classList.add('hidden');
+  document.getElementById('hostPanel').classList.remove('hidden');
+  document.getElementById('roomCode').innerText=room;
+
   loadQuizzes();
+  listenRoom();
 }
 
-function joinRoom(){
-  room=document.getElementById('room').value;
+function joinGame(){
   nick=document.getElementById('nick').value;
+  room=document.getElementById('joinCode').value;
 
   db.ref('rooms/'+room+'/players/'+nick).set({score:0});
 
-  document.getElementById('login').classList.add('hidden');
+  document.getElementById('menu').classList.add('hidden');
   document.getElementById('lobby').classList.remove('hidden');
 
-  listen();
+  listenRoom();
 }
 
-function listen(){
+function listenRoom(){
   db.ref('rooms/'+room).on('value',snap=>{
     const d=snap.val(); if(!d) return;
 
-    document.getElementById('players').innerText = Object.keys(d.players||{}).join(', ');
+    if(d.players)
+      document.getElementById('players').innerText=Object.keys(d.players).join(', ');
 
-    if(isHost) document.getElementById('startBtn').classList.remove('hidden');
-
-    if(d.phase==='question') showQ(d);
+    if(d.state==='running') loadQuestion(d);
   });
 }
 
 function loadQuizzes(){
   db.ref('quizzes').once('value',snap=>{
-    const list=snap.val()||{};
-    const sel=document.getElementById('quizList');
-    sel.innerHTML="";
+    const data=snap.val()||{};
+    const div=document.getElementById('quizSelect');
 
-    Object.keys(list).forEach(k=>{
-      let o=document.createElement('option');
-      o.value=k;
-      o.innerText=list[k].title;
-      sel.appendChild(o);
+    div.innerHTML='<h4>WYBIERZ QUIZ</h4>';
+
+    Object.keys(data).forEach(id=>{
+      let b=document.createElement('button');
+      b.innerText=data[id].title;
+      b.onclick=()=>selectQuiz(id);
+      div.appendChild(b);
     });
   });
 }
 
-function chooseQuiz(){
-  const id=document.getElementById('quizList').value;
-  db.ref('rooms/'+room).update({quizId:id,phase:'lobby',qIndex:0});
-
-  document.getElementById('selectQuiz').classList.add('hidden');
-  document.getElementById('lobby').classList.remove('hidden');
+function selectQuiz(id){
+  db.ref('rooms/'+room).update({quizId:id});
+  alert("Quiz ustawiony!");
 }
 
 function startGame(){
-  db.ref('rooms/'+room).update({phase:'question',qIndex:0});
+  db.ref('rooms/'+room).update({state:'running',index:0});
   next();
 }
 
 function next(){
   db.ref('rooms/'+room).once('value',snap=>{
-    const d=snap.val(); if(!d) return;
-
-    db.ref('quizzes/'+d.quizId).once('value',qSnap=>{
-      const quiz=qSnap.val(); if(!quiz) return;
-
-      index=d.qIndex;
+    const roomData=snap.val();
+    db.ref('quizzes/'+roomData.quizId).once('value',q=>{
+      quiz=q.val();
+      index=roomData.index;
 
       if(index>=quiz.questions.length){
-        db.ref('rooms/'+room).update({phase:'end'});
+        db.ref('rooms/'+room).update({state:'end'});
         return;
       }
 
-      runQ(quiz.questions[index]);
+      show(quiz.questions[index]);
     });
   });
 }
 
-function runQ(q){
+function show(q){
   document.getElementById('game').classList.remove('hidden');
-  document.getElementById('lobby').classList.add('hidden');
-
-  document.getElementById('q').innerText=q.q;
+  document.getElementById('hostPanel').classList.add('hidden');
+  document.getElementById('question').innerText=q.q;
   document.getElementById('a').innerText=q.a;
   document.getElementById('b').innerText=q.b;
   document.getElementById('c').innerText=q.c;
@@ -238,30 +181,28 @@ function runQ(q){
   let t=10;
   clearInterval(timer);
   timer=setInterval(()=>{
-    document.getElementById('timer').innerText="⏳ "+t;
+    document.getElementById('timer').innerText=t;
     t--;
     if(t<0){
       clearInterval(timer);
-      db.ref('rooms/'+room).update({qIndex:index+1});
+      db.ref('rooms/'+room).update({index:index+1});
       next();
     }
   },1000);
 }
 
-function showQ(d){}
-
 function answer(v){
-  db.ref('rooms/'+room+'/players/'+nick).once('value',snap=>{
-    let s=snap.val().score||0;
-    db.ref('rooms/'+room+'/players/'+nick).update({score:s+1});
+  db.ref('rooms/'+room+'/players/'+nick).transaction(p=>{
+    if(p){p.score=(p.score||0)+1;}return p;
   });
 }
 
 function saveQuiz(){
-  const title=document.getElementById('quizTitle').value;
-  const data=JSON.parse(document.getElementById('quizData').value);
+  const title=document.getElementById('qTitle').value;
+  const data=JSON.parse(document.getElementById('qData').value);
+
   db.ref('quizzes').push({title,questions:data});
-  alert('Zapisano');
+  alert("Zapisano quiz");
 }
 </script>
 </body>
