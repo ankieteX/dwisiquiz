@@ -3,65 +3,93 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>MEM QUIZ PRO 🔥</title>
+<title>MEM QUIZ GOD MODE 🔥</title>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 <style>
-body{margin:0;font-family:Arial;background:#0f0f0f;color:#fff;text-align:center}
-.container{max-width:900px;margin:auto;padding:20px}
-.card{background:#1c1c1c;padding:15px;border-radius:12px;margin-top:10px}
-button{padding:12px;margin:6px;width:100%;border:0;border-radius:10px;font-size:15px;cursor:pointer}
-input,textarea,select{width:100%;padding:10px;margin:5px;border-radius:8px;border:none}
+body{
+margin:0;
+font-family:Arial;
+background:radial-gradient(circle at top,#1a1a1a,#000);
+color:#fff;
+text-align:center;
+}
+.container{max-width:1000px;margin:auto;padding:20px}
+.card{
+background:rgba(255,255,255,0.06);
+border:1px solid rgba(255,255,255,0.1);
+backdrop-filter:blur(10px);
+padding:16px;
+border-radius:16px;
+margin-top:12px;
+box-shadow:0 0 25px rgba(0,0,0,0.4);
+}
+button{
+padding:14px;
+margin:6px;
+width:100%;
+border:0;
+border-radius:12px;
+font-size:15px;
+cursor:pointer;
+transition:0.2s;
+}
+button:hover{transform:scale(1.02)}
+input,textarea,select{
+width:100%;padding:10px;margin:5px;border-radius:8px;border:none
+}
 .hidden{display:none}
-.a{background:#2ecc71}
-.b{background:#f1c40f}
-.c{background:#e74c3c}
-.timer{font-size:22px;margin:10px}
-.small{font-size:12px;opacity:.7}
+.a{background:#00e676;color:#000;font-weight:bold}
+.b{background:#ffea00;color:#000;font-weight:bold}
+.c{background:#ff1744;color:#fff;font-weight:bold}
+.timer{font-size:26px;margin:10px;color:#00e5ff;text-shadow:0 0 10px #00e5ff}
+.title{
+font-size:34px;
+font-weight:900;
+background:linear-gradient(90deg,#00e5ff,#ff00ff);
+-webkit-background-clip:text;
+-webkit-text-fill-color:transparent;
+}
 </style>
 </head>
 <body>
 <div class="container">
-<h1>🔥 MEM QUIZ PRO MULTIPLAYER</h1>
 
-<!-- LOGIN -->
+<h1 class="title">🔥 MEM QUIZ GOD MODE</h1>
+
 <div id="login" class="card">
-  <h3>Wejście</h3>
-  <input id="nick" placeholder="Nick"/>
-  <input id="room" placeholder="Kod pokoju"/>
-  <button onclick="createRoom()">Stwórz pokój (HOST)</button>
-  <button onclick="joinRoom()">Dołącz</button>
+<h3>Wejście</h3>
+<input id="nick" placeholder="Nick"/>
+<input id="room" placeholder="Kod pokoju"/>
+<button onclick="createRoom()">STWÓRZ POKÓJ (HOST)</button>
+<button onclick="joinRoom()">DOŁĄCZ</button>
 </div>
 
-<!-- LOBBY -->
 <div id="lobby" class="card hidden">
-  <h3>Lobby</h3>
-  <div id="players"></div>
-  <button onclick="startGame()" id="startBtn" class="hidden">START</button>
+<h3>Lobby</h3>
+<div id="players"></div>
+<button id="startBtn" onclick="startGame()" class="hidden">START</button>
 </div>
 
-<!-- GAME -->
 <div id="game" class="card hidden">
-  <h2 id="q"></h2>
-  <button class="a" onclick="answer('A')" id="a"></button>
-  <button class="b" onclick="answer('B')" id="b"></button>
-  <button class="c" onclick="answer('C')" id="c"></button>
-  <div class="timer" id="timer"></div>
+<h2 id="q"></h2>
+<div class="timer" id="timer"></div>
+<button class="a" onclick="answer('A')" id="a"></button>
+<button class="b" onclick="answer('B')" id="b"></button>
+<button class="c" onclick="answer('C')" id="c"></button>
 </div>
 
-<!-- BUILDER -->
 <div id="builder" class="card hidden">
-  <h3>Tworzenie quizu</h3>
-  <input id="quizTitle" placeholder="Tytuł quizu"/>
-  <textarea id="quizData" placeholder='[{"q":"pytanie","a":"A","b":"B","c":"C"}]'></textarea>
-  <button onclick="saveQuiz()">Zapisz quiz</button>
+<h3>Quiz Builder</h3>
+<input id="quizTitle" placeholder="Tytuł quizu"/>
+<textarea id="quizData" placeholder='[{"q":"pytanie","a":"A","b":"B","c":"C"}]'></textarea>
+<button onclick="saveQuiz()">Zapisz quiz</button>
 </div>
 
-<!-- QUIZ SELECT -->
 <div id="selectQuiz" class="card hidden">
-  <h3>Wybierz quiz</h3>
-  <select id="quizList"></select>
-  <button onclick="chooseQuiz()">Użyj</button>
+<h3>Wybierz quiz</h3>
+<select id="quizList"></select>
+<button onclick="chooseQuiz()">Użyj</button>
 </div>
 
 </div>
@@ -84,11 +112,37 @@ let room="";
 let nick="";
 let isHost=false;
 let currentQuiz=null;
-let currentIndex=0;
-let timerInterval;
-let startAt=0;
+let index=0;
+let timer;
 
-// ROOM
+// SAFE DEFAULT QUIZZES (neutral IT humor)
+const defaultQuizzes = [
+{
+  title:"IT Office Chaos",
+  questions:[
+    {q:"Kto ma vibe 'działa na moim komputerze'?",a:"Dev A",b:"Dev B",c:"Dev C"},
+    {q:"Kto najczęściej mówi 'u mnie działa'?",a:"Dev A",b:"Dev B",c:"Dev C"},
+    {q:"Kto najczęściej robi merge konflikt?",a:"Dev A",b:"Dev B",c:"Dev C"}
+  ]
+},
+{
+  title:"Office Energy",
+  questions:[
+    {q:"Kto ma największą energię chaosu w poniedziałek?",a:"Dev A",b:"Dev B",c:"Dev C"},
+    {q:"Kto wygląda jakby debugował życie?",a:"Dev A",b:"Dev B",c:"Dev C"}
+  ]
+}
+];
+
+function seed(){
+  db.ref('quizzes').once('value',snap=>{
+    if(!snap.val()){
+      defaultQuizzes.forEach(q=>db.ref('quizzes').push(q));
+    }
+  });
+}
+seed();
+
 function createRoom(){
   room=Math.floor(Math.random()*9000+1000)+"";
   nick=document.getElementById('nick').value||"HOST";
@@ -117,21 +171,20 @@ function listen(){
   db.ref('rooms/'+room).on('value',snap=>{
     const d=snap.val(); if(!d) return;
 
-    const p=d.players||{};
-    document.getElementById('players').innerText=Object.keys(p).join(', ');
+    document.getElementById('players').innerText = Object.keys(d.players||{}).join(', ');
 
     if(isHost) document.getElementById('startBtn').classList.remove('hidden');
 
-    if(d.phase==='question') showQuestion(d);
+    if(d.phase==='question') showQ(d);
   });
 }
 
-// QUIZES
 function loadQuizzes(){
   db.ref('quizzes').once('value',snap=>{
     const list=snap.val()||{};
     const sel=document.getElementById('quizList');
     sel.innerHTML="";
+
     Object.keys(list).forEach(k=>{
       let o=document.createElement('option');
       o.value=k;
@@ -143,77 +196,60 @@ function loadQuizzes(){
 
 function chooseQuiz(){
   const id=document.getElementById('quizList').value;
-  db.ref('quizzes/'+id).once('value',snap=>{
-    db.ref('rooms/'+room).update({quizId:id,phase:'lobby',qIndex:0});
-  });
+  db.ref('rooms/'+room).update({quizId:id,phase:'lobby',qIndex:0});
+
   document.getElementById('selectQuiz').classList.add('hidden');
   document.getElementById('lobby').classList.remove('hidden');
 }
 
-// START
 function startGame(){
-  startAt=Date.now()+3000;
-  db.ref('rooms/'+room).update({phase:'question',qIndex:0,startAt:startAt});
-  runTimer();
+  db.ref('rooms/'+room).update({phase:'question',qIndex:0});
+  next();
 }
 
-function runTimer(){
-  clearInterval(timerInterval);
-  timerInterval=setInterval(()=>{
-    const now=Date.now();
-    const left=Math.max(0,10-Math.floor((now-startAt)/1000));
-    document.getElementById('timer').innerText="⏳ "+left;
-
-    if(left<=0){
-      nextQuestion();
-    }
-  },500);
-}
-
-function nextQuestion(){
-  clearInterval(timerInterval);
+function next(){
   db.ref('rooms/'+room).once('value',snap=>{
-    const d=snap.val();
-    if(!d) return;
+    const d=snap.val(); if(!d) return;
 
     db.ref('quizzes/'+d.quizId).once('value',qSnap=>{
-      const quiz=qSnap.val();
-      if(!quiz) return;
+      const quiz=qSnap.val(); if(!quiz) return;
 
-      currentIndex=d.qIndex+1;
+      index=d.qIndex;
 
-      if(currentIndex>=quiz.questions.length){
+      if(index>=quiz.questions.length){
         db.ref('rooms/'+room).update({phase:'end'});
         return;
       }
 
-      startAt=Date.now()+3000;
-      db.ref('rooms/'+room).update({qIndex:currentIndex,startAt:startAt});
-      runTimer();
+      runQ(quiz.questions[index]);
     });
   });
 }
 
-// SHOW
-function showQuestion(data){
-  db.ref('quizzes/'+data.quizId).once('value',snap=>{
-    const quiz=snap.val();
-    if(!quiz) return;
+function runQ(q){
+  document.getElementById('game').classList.remove('hidden');
+  document.getElementById('lobby').classList.add('hidden');
 
-    const q=quiz.questions[data.qIndex];
-    if(!q) return;
+  document.getElementById('q').innerText=q.q;
+  document.getElementById('a').innerText=q.a;
+  document.getElementById('b').innerText=q.b;
+  document.getElementById('c').innerText=q.c;
 
-    document.getElementById('game').classList.remove('hidden');
-    document.getElementById('lobby').classList.add('hidden');
-
-    document.getElementById('q').innerText=q.q;
-    document.getElementById('a').innerText=q.a;
-    document.getElementById('b').innerText=q.b;
-    document.getElementById('c').innerText=q.c;
-  });
+  let t=10;
+  clearInterval(timer);
+  timer=setInterval(()=>{
+    document.getElementById('timer').innerText="⏳ "+t;
+    t--;
+    if(t<0){
+      clearInterval(timer);
+      db.ref('rooms/'+room).update({qIndex:index+1});
+      next();
+    }
+  },1000);
 }
 
-// ANSWER
+function showQ(d){}
+
 function answer(v){
   db.ref('rooms/'+room+'/players/'+nick).once('value',snap=>{
     let s=snap.val().score||0;
@@ -221,14 +257,11 @@ function answer(v){
   });
 }
 
-// SAVE QUIZ
 function saveQuiz(){
   const title=document.getElementById('quizTitle').value;
   const data=JSON.parse(document.getElementById('quizData').value);
-  const id='quiz_'+Date.now();
-
-  db.ref('quizzes/'+id).set({title:title,questions:data});
-  alert('Zapisano quiz');
+  db.ref('quizzes').push({title,questions:data});
+  alert('Zapisano');
 }
 </script>
 </body>
