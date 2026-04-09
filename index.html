@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz Biurowy Multiplayer 🔥</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<style>
+body { font-family: Arial; background:#111; color:#fff; text-align:center; }
+.container { max-width:700px; margin:auto; padding:20px; }
+button { padding:15px; margin:10px; width:100%; border:none; border-radius:10px; cursor:pointer; }
+.a { background:#2ecc71; }
+.b { background:#f1c40f; }
+.c { background:#e74c3c; }
+.hidden { display:none; }
+</style>
+</head>
+<body>
+<div class="container">
+<h1>🔥 QUIZ MULTIPLAYER</h1>
+
+<div id="login">
+<input id="nick" placeholder="Nick" />
+<input id="room" placeholder="Kod pokoju (np. 1234)" />
+<button onclick="join()">Dołącz</button>
+<button onclick="createRoom()">Stwórz pokój (host)</button>
+</div>
+
+<div id="quiz" class="hidden">
+<h2 id="question"></h2>
+<button class="a" onclick="answer(1)" id="a"></button>
+<button class="b" onclick="answer(2)" id="b"></button>
+<button class="c" onclick="answer(3)" id="c"></button>
+<p id="timer"></p>
+</div>
+
+<div id="results" class="hidden"></div>
+</div>
+
+<script>
+// 🔥 Wklej tu config z Firebase (jedyny krok który musisz zrobić)
+const firebaseConfig = {
+  apiKey: "AIzaSyCjIKb55h0taiyQNAHmP2JX9QQ-mfL8FAQ",
+  authDomain: "kahoot-1e809.firebaseapp.com",
+  databaseURL: "https://console.firebase.google.com/u/0/project/kahoot-1e809/database/kahoot-1e809-default-rtdb/data/~2F",
+  projectId: "kahoot-1e809",
+  storageBucket: "kahoot-1e809.firebasestorage.app",
+  messagingSenderId: "24344892847",
+  appId: "1:24344892847:web:cce7d556f1319c6c074b5a"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+const questions = [
+{q:"Ile osób siedzi w pokoju?",a:"1-2",b:"3-4",c:"5+"},
+{q:"Hałas?",a:"cisza",b:"ok",c:"chaos"},
+{q:"Zapach?",a:"ok",b:"meh",c:"dramat"},
+{q:"Teams?",a:"cisza",b:"czasem",c:"nonstop"},
+{q:"Zmęczenie?",a:"chill",b:"meh",c:"pomocy"}
+];
+
+let room="";
+let nick="";
+let current=0;
+let timer;
+
+function createRoom(){
+room = Math.floor(Math.random()*9000+1000).toString();
+nick = "HOST";
+alert("Kod pokoju: "+room);
+db.ref("rooms/"+room).set({q:0, start:false});
+listenRoom();
+startHost();
+}
+
+function join(){
+room=document.getElementById('room').value;
+nick=document.getElementById('nick').value;
+db.ref("rooms/"+room+"/players/"+nick).set({score:0});
+listenRoom();
+}
+
+function listenRoom(){
+document.getElementById('login').classList.add('hidden');
+document.getElementById('quiz').classList.remove('hidden');
+
+ db.ref("rooms/"+room).on("value", snap=>{
+   const data=snap.val();
+   if(!data) return;
+   current=data.q;
+   if(data.start) showQuestion();
+ });
+}
+
+function startHost(){
+let i=0;
+db.ref("rooms/"+room).update({start:true});
+
+function next(){
+ if(i>=questions.length){ showResults(); return; }
+ db.ref("rooms/"+room).update({q:i});
+ let t=10;
+ document.getElementById('timer').innerText=t;
+ timer=setInterval(()=>{
+  t--;
+  document.getElementById('timer').innerText=t;
+  if(t<=0){ clearInterval(timer); i++; next(); }
+ },1000);
+}
+next();
+}
+
+function showQuestion(){
+const q=questions[current];
+if(!q) return;
+document.getElementById('question').innerText=q.q;
+document.getElementById('a').innerText=q.a;
+document.getElementById('b').innerText=q.b;
+document.getElementById('c').innerText=q.c;
+}
+
+function answer(val){
+const ref=db.ref("rooms/"+room+"/players/"+nick+"/score");
+ref.transaction(s=> (s||0)+val);
+}
+
+function showResults(){
+document.getElementById('quiz').classList.add('hidden');
+const r=document.getElementById('results');
+r.classList.remove('hidden');
+
+db.ref("rooms/"+room+"/players").once("value", snap=>{
+ let html="<h2>Wyniki</h2>";
+ snap.forEach(p=>{
+  html += `<p>${p.key}: ${p.val().score}</p>`;
+ });
+ r.innerHTML=html;
+});
+}
+</script>
+</body>
+</html>
